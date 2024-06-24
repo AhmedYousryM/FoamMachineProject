@@ -11,7 +11,7 @@
 * It is possible to run nested sequences
 
 Author: Ahmed Yousry
-Date: 16/12
+Date: 16/12/2023
 */
 
 
@@ -47,7 +47,7 @@ class NonBlockingSequence{
     // end-line to repeat the sequence for infinity
 
     void Repeat(unsigned int n);
-    //end-line to repeat the sequence for infinity
+    //end-line to repeat the sequence for n times
 
     bool Finish();
     // check if the sequence reach its end
