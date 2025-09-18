@@ -95,13 +95,13 @@ Communication::variable Communication::myList_search(String str){
    }
    
 }
-Communication::function Communication::myFunc_search(String str){
+Communication::function Communication::myFunc_search(String mystr){
   Func_List.from_begining();
   int n = Func_List.size_;
   bool b = false;
    for(int i=0;i<n;i++){
      //To_screen(String(Var_List.get_element().var_type));
-      if(str.equals(Func_List.get_element().str)){
+      if(mystr.equals(Func_List.get_element().str)){
         b=true;
         
         break;
@@ -112,7 +112,7 @@ Communication::function Communication::myFunc_search(String str){
     return Func_List.get_element();
    }
    else{
-    To_screen(str+" fuction is not found in the list");
+    To_screen(mystr+" fuction is not found in the list");
     return no_func;
    }
    
@@ -194,6 +194,16 @@ void Communication::recieve(String recieved_string){
       To_screen( recieved_string.substring(3) );
     }
     else if ( recieved_string.indexOf('=') != -1 ){
+      // check CRC 
+      byte len = recieved_string.length();
+      char c = recieved_string.charAt(len-1);
+      recieved_string.remove(len-1);
+      CRC8 crc;
+      len = recieved_string.length();
+      char buf[len];
+      svar_str.toCharArray(buf,len);
+      crc.add( (uint8_t*)buf , len );
+      if (c==crc.calc()){
       int ind = recieved_string.indexOf('=');
       String var_str=recieved_string.substring(0,ind-2);
       variable myvar = myList_search(var_str);
@@ -231,6 +241,9 @@ void Communication::recieve(String recieved_string){
             Check_and_Assing<double>(myvar,var_value);
             break;
         }
+      }
+      }else{
+        To_screen("wrong assignment statement");
       }
    }
    else if(recieved_string.endsWith("?") != -1){
@@ -297,6 +310,14 @@ bool Communication::send_variable(String var_str){
             Serial.print("oo");
             break;
         }
+  // Add CRC byte to this message
+  CRC8 crc;
+  byte len = svar_str.length();
+  char buf[len];
+  svar_str.toCharArray(buf,len);
+  crc.add( (uint8_t*)buf , len );
+  var_str.concat( crc.calc() );
+  // send message
   save_message(var_str);
   return true;
   }
@@ -414,7 +435,7 @@ void Communication::List_Update(){
 
 }
 
-void add_func(String str,void (*func) ()){
+void Communication::add_func(String str,void (*func) ()){
   function *new_fun= new function();
   new_fun->str=str;
   new_fun->func=func;

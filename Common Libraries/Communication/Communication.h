@@ -6,7 +6,8 @@
 #include "String_Buffer.h"
 #include "MyLinkedList.h"
 #include <Arduino.h>
-
+#include <CRC8.h>
+#include <CRC.h>
 
 
 class Communication{
@@ -52,10 +53,11 @@ void recieve(String recieved_string);
      bool responded=false;
   };
 
-  clas function{
+  class function{
+    public:
     String str;
     void (*func) ();
-  }
+  };
 
 static function no_func;
 MyLinkedList<function> Func_List;
@@ -80,7 +82,7 @@ template <typename T>
 bool Check_and_Assing(variable var,String val);
 String_Buffer myBuffer;
 };
-
+/*
 template <typename T>
 void send_variable(T* var){
   variable myvar = myList_search_pointer(void* var);
@@ -125,7 +127,7 @@ void send_variable(T* var){
     return false;
   }
 }
-
+*/
 template <typename T>
 void Communication::add_var(String str,T* var_pointer){
   variable *new_var= new variable();

@@ -1,0 +1,7 @@
+#define CNC_MAX_X 2800
+#define CNC_MIN_X 1600
+#define CNC_MAX_Y 1400
+#define GANTRY_WIDTH_X 250
+#define HEAD_WIDTH_Y 300
+#define FIXATION_WIDTH_Y 300
+#define SAFE_GAB 20

@@ -1,0 +1,12 @@
+
+sensor lierary filter by N_Count or Time in millis or micros
+
+Sensor and Motor Definition file
+
+after knowing the right page
+sequence in reading sensor in each step and a step for checking ReadyToSend variable, loop infinite times
+
+after checking all possible motor in specified page (only one motor will move, break anfter first true)
+the true will be converted to false and either:
+moveTo(currentPosition +- 80)
+jog Gcode motion
