@@ -14,6 +14,7 @@
 #define SIDEWOOD_FIRST_SENSOR 1713.4
 #define SIDEWOOD_BETWEEN_SENSOR 240
 #define SIDEWOOD_BETWEEN_SENSOR_LAST_ONE 230
+  
 
 
 
@@ -24,6 +25,7 @@ class Fixation_main{
     bool Homing();
     void before_Fixation(float foam_start,float foam_end);
     bool Fixating();
+    void ResetFixating();
     float Measure_FoamYWidth = 0;
     bool FoamYWidth_is_Correct = true ;
     bool FixatingReset(){
@@ -33,7 +35,8 @@ class Fixation_main{
     bool GoingOut();
     bool GoingInSafe();
     bool DoingLubrication();
-
+    void ResetLubrication();
+    bool MotionReset=true;
     bool ReleaseFixation(){
         return GoingInSafe();
     }
@@ -53,6 +56,7 @@ class Fixation_main{
     bool Homing_MoveShortRun();
     bool Homing_End();
 
+    bool beforeFix();
     bool approachNearFoam();
     bool touchFoam();
     bool afterTouch();

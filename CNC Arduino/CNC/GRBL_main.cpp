@@ -1,21 +1,17 @@
 #include "GRBL_main.h"
 
+/*
 GRBL_Main::Grbl_Main(byte Head_Num_var, HardwareSerial &grblSerial, const String &filename):
    GRBL_Control(grblSerial),GRBL_Sender(grblSerial, filename){
     if( Head_Num_var==1 | Head_Num_var==2 ){
         Head_num = Head_Num_var;
     }else{
-        /*
-        send a wrong message
-        we have only two heads
-        stop here
-        */
+        //error( invalid Head num);
     }
-    
-
 }
-
-GRBL_Main::Grbl_Main(byte Head_Num_var, HardwareSerial &grblSerial): GRBL_Control(grblSerial){
+*/
+GRBL_Main::Grbl_Main(byte Head_Num_var, HardwareSerial &grblSerial): 
+GRBL_Control(grblSerial),GRBL_Sender(grblSerial){
     if( Head_Num_var==1 | Head_Num_var==2 ){
         Head_num = Head_Num_var;
     }else{
@@ -30,7 +26,7 @@ GRBL_Main::Grbl_Main(byte Head_Num_var, HardwareSerial &grblSerial): GRBL_Contro
 void GRBL_Main::begin(){
 
     Control_begin();
-    Sender_begin();
+    //Sender_begin();
 
     HomingSequence.AttachedObj(this);
     HomingSequence.AddDelayInMillis(100);
@@ -57,6 +53,13 @@ void GRBL_Main::begin(){
     StartPos2Sequence.AddDelayInMillis(100);
     StartPos2Sequence.AddNewStep(&StartPos2_2);
     StartPos2Sequence.AddDelayInMillis(100);
+
+    StartPos1Sequence.AttachedObj(this);
+    StartPos1Sequence.AddDelayInMillis(100);
+    StartPos1Sequence.AddNewStep(&StartPos1_1);
+    StartPos1Sequence.AddDelayInMillis(100);
+    StartPos1Sequence.AddNewStep(&StartPos1_2);
+    StartPos1Sequence.AddDelayInMillis(100);
 
     WorkingSequence.AttachedObj(this);
     WorkingSequence.AddDelayInMillis(100);
@@ -90,7 +93,7 @@ void GRBL_Main::begin(){
 
 bool GRBL_Main::Homing(){
     HomingSequence.DoSequence();
-    return Homing.isFinished();
+    return HomingSequence.isFinished();
 }
 
 bool GRBL_Main::Homing1(){
@@ -196,8 +199,33 @@ bool GRBL_Main::GoTo_StartPos2(){
     StartPos2Sequence.DoSequence();
 }
 
+bool GRBL_Main::GoTo_StartPos1(){
+    StartPos1Sequence.DoSequence();
+}
+
+void GRBL_Main::Reset_GoTo_StartPos2(){
+    StartPos2Sequence.Reset();
+}
+void GRBL_Main::Reset_GoTo_StartPos1(){
+    StartPos1Sequence.Reset();
+}
+
 bool GRBL_Main::StartPos2_1(){
-    if (Homing.FirstTimeStepExecuting()==true){
+    if (Head_num=1){
+        Set_StartPos2(
+            RC_get_var(HEAD1_START_POSITION_X), 
+            RC_get_var(HEAD1_START_POSITION_Y),
+            RC_get_var(FOAM_HEIGHT)+SAFE_GAB);
+    }else if (Head_num=2){
+        Set_StartPos2(
+            RC_get_var(HEAD2_START_POSITION_X), 
+            RC_get_var(HEAD2_START_POSITION_Y),
+            RC_get_var(FOAM_HEIGHT)+SAFE_GAB);
+    }
+    
+
+
+    if (StartPos2Sequence.FirstTimeStepExecuting()==true){
         moveToZ( start_z );
         return false;
     }else{
@@ -206,7 +234,7 @@ bool GRBL_Main::StartPos2_1(){
 }
 
 bool StartPos2_2(){
-    if (Homing.FirstTimeStepExecuting()==true){
+    if (StartPos2Sequence.FirstTimeStepExecuting()==true){
         moveToXY(start_x, start_y);
         return false;
     }else{
@@ -217,12 +245,12 @@ bool StartPos2_2(){
 void GRBL_Main::Set_StartPos2(float x, float y, float z){
     start_x=x;
     start_y=y;
-    start_z=z;
+    start_z=CR_var_get(FOAM_HEIGHT)+GAB;
 }
 
 bool GRBL_Main::ZAxis_Adjustment_Loop(){
 
-        if (EndZAdjustment==false){
+        if (!RC_get_var(ZAXIS_SETUP_DONE)){
         if(Head_num==1){
             ZAxis( digitalRead(36) , digitalRead(37) , digitalRead(38) )
         }elseif(Head_num==2){
@@ -291,17 +319,20 @@ void GRBL_Main::ZAxis(bool Up,bool Down,bool Zero){
 
 void GRBL_Main::AdjustmentEnd(bool b){
     if(b==true){
-        EndZAdjustment = true;
+        RC_set_var(ZAXIS_SETUP_DONE,true);
+        RC_send_var(ZAXIS_SETUP_DONE);
         moveToZ( MaximumZAxisTravel - SAFE_GAB);
     }
 }
 
 bool GRBL_Main::IsZAxisAdjustmentFinished(){
-    return EndZAdjustment;
+    return RC_get_var(ZAXIS_SETUP_DONE);
 }
+/*
 void GRBL_Main::ReAdjustZAxis(){
     EndZAdjustment=false;
 }
+*/
 
 bool GRBL_Main::Start_Cutting(){
     if (Working_enable==true)
@@ -323,8 +354,9 @@ bool GRBL_Main::WaitForOK(){
 }
 
 bool GRBL_Main::Working1(){
+    SetWorkpieceCoordinates( pointx_half_foam + FORK_FIXATION_GAB , CNC_MAX_Y-0.5*MC_var[FOAMYWIDTH] , MC_var[FOAM_HEIGHT] );
     UseWorkpieceCoordinates();
-    return true;
+    return Sender_begin();
 }
 
 bool GRBL_Main::Working2(){
@@ -340,10 +372,16 @@ bool GRBL_Main::Working4(){
     return Sender_run();
 }
 bool GRBL_Main::Working5(){
-    UseMachineCoordinates();
-    return true;
+    if (WorkingSequence.FirstTimeStepExecuting()==true){
+        UseMachineCoordinates();
+        moveToZ( start_z );
+        return false;
+    }else{
+        return !IsMoving();
+    }
+    
 }
-bool GRBL_Main::Working5(){
+bool GRBL_Main::Working6(){
     SpindleStop();
     return true;
 }
@@ -352,6 +390,51 @@ bool GRBL_Main::bigBlowering(){
     BloweringSequence.DoSequence();
     return BloweringSequence.isFinished();
 }
+
+void GRBL_Main::ResetBigBlowering(){
+    BloweringSequence.Reset();
+}
+
+bool GRBL_Main::beforeFixating(){
+    if (MotionReset==true){
+        if (Head_Num_var==1){
+            //  FORK_FIXATION_GAB is the distance fork release before fixation point
+            if ( RC_var_get(FIXATION_POINT_2_X) !=0 ){
+                pointx_half_foam =RC_var_get(FIXATION_POINT_2_X) - FORK_FIXATION_GAB - 0.5* FC_var_get(G1_FOAM_WIDTH);
+            }else{
+                pointx_half_foam =FC_var_get(FORK_FIXATION_POINT_2_X) - FORK_FIXATION_GAB - 0.5* FC_var_get(G1_FOAM_WIDTH);
+            }
+        }else{
+            //  FORK_FIXATION_GAB is the distance fork release before fixation point
+            pointx_half_foam =CNC_GATE_X_POS - FORK_FIXATION_GAB - 0.5* FC_var_get(G2_FOAM_WIDTH);
+        }    
+        moveToXY( pointx_half_foam , start_y); 
+        MotionReset=false;
+        return false;
+    }else{
+        return !IsMoving();
+    }
+}
+
+bool GRBL_Main::Sender_begin(){
+    if (Head_Num_var==1){
+        return Sender_begin(GCODE_FILE_PATH1);
+    }else{
+        return Sender_begin(GCODE_FILE_PATH2);
+    }    
+}
+
+bool GRBL_Main::ZSensorHOmingFlagFun(){
+    if (Head_Num_var==1){
+        ZSensorHomingFlag = HeadG1ZUpSensor.readFiltered();
+    }else{
+        ZSensorHomingFlag = HeadG2ZUpSensor.readFiltered();
+    } 
+    return ZSensorHomingFlag;
+}
+
+GRBL_Main GRBL_main1(1,Serial1)
+GRBL_Main GRBL_main2(1,Serial2)
 /*
 bool Blowering1(){
     if (BloweringSequence.FirstTimeStepExecuting()==true){
@@ -391,6 +474,8 @@ bool Blowering2(){
 }
 */
 
+
+    
 
 
 

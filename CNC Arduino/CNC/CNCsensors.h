@@ -31,6 +31,7 @@ extern SensorFilter FrameG1XSensor;
 extern SensorFilter G1G2XSensor;
 extern SensorFilter G2FrameXSensor;
 
+extern SensorFilter ErrorPin;
 /*
 extern SensorFilter FoamSensor[] = {SidePlateSensor1,SidePlateSensor2,SidePlateSensor3,SidePlateSensor4,SidePlateSensor5,
     FixationG1LimitSensor,FixationG2LimitSensor};

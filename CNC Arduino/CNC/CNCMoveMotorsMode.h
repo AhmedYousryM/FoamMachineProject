@@ -11,10 +11,11 @@
 
 
     class MoveMotorsMode{
-         void begin();
-         void loop();
+         static void begin();
+         static void loop();
 
          private:
+         MoveMotorsMode()=delete;
          
     };
 #endif

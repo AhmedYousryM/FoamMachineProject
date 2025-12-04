@@ -38,6 +38,8 @@
         Homing.AddDelayInMillis(100);
         Homing.AddNewStep(&Homing_GoReverseRun);
 
+        Fixating.AddNewStep(&beforeFix);
+        Fixating.AddDelayInMillis(100);
         Fixating.AddNewStep(&approachNearFoam);
         Fixating.AddDelayInMillis(100);
         Fixating.AddNewStep(&touchFoam);
@@ -55,6 +57,9 @@
     bool Fixation_main::Fixating(){
         Fixating.DoSequence();
     }
+    void Fixation_main::ResetFixating(){
+        Fixating.Reset();
+    }
 
     bool Fixation_main::GoingOut(){
         GoingOut.DoSequence();
@@ -67,8 +72,12 @@
 
 
     bool Fixation_main::DoingLubrication(){
-        Lubricatin.DoSequence();
+        return Lubricatin.DoSequence();
     }
+    void Fixation_main::ResetLubrication(){
+        Lubricatin.Reset();
+    }
+
 
 
 // Sequence Step
@@ -142,8 +151,9 @@
     }
 
     bool Fixation_main::GoingOut(){
-        if(Homing.FirstTimeStepExecuting==true){
+        if(MotionReset==true){
             _motor.moveTo(GAB);
+            MotionReset=false;
             return false;
         }else{
             _motor.run();
@@ -152,10 +162,13 @@
     }
 
     bool Fixation_main::GoingInSafe(){
-        float target_pos = safe_pos_before( CNC_MAX_Y - getValue(&CR_Vars[FOAMYWIDTH]) - BETWEEN_17_WOOD - GAB );
-        _motor.moveTo( target_pos );
-        _motor.run();
-        return ( _motor.distanceToGo()==0 );
+        if (MotionReset==true){
+            float target_pos = safe_pos_before( CNC_MAX_Y - getValue(&CR_Vars[FOAMYWIDTH]) - BETWEEN_17_WOOD - GAB );
+            _motor.moveTo( target_pos );
+        }else{
+            _motor.run();
+            return ( _motor.distanceToGo()==0 );
+        }
     }
 
 // helper functions
@@ -180,6 +193,18 @@ void Fixation_main::before_Fixation(float foam_start,float foam_end){
             sidePlateSensorBool[i] = true; 
         else
             sidePlateSensorBool[i] = false;
+}
+
+bool Fixation_main::beforeFix(){
+    if(_num==1){
+        //  FORK_FIXATION_GAB is the distance fork release before fixation point
+        float end_point=RC_var_get(FIXATION_POINT_2_X) - FORK_FIXATION_GAB;
+        before_Fixation(end_point-FC_var_get(G1_FOAM_WIDTH),end_point);
+    }else{
+        //  FORK_FIXATION_GAB is the distance fork release before fixation point
+        float end_point=CNC_GATE_X_POS - FORK_FIXATION_GAB;
+        before_Fixation(end_point-FC_var_get(G2_FOAM_WIDTH),end_point);
+    }
 }
 
 bool Fixation_main::approachNearFoam(){

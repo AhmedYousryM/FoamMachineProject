@@ -1,7 +1,7 @@
 #include "GRBL_Sender.h"
 
-GRBL_Sender::GRBL_Sender(HardwareSerial &grblSerial, const String &filename)
-  : _grblSerial(&grblSerial), _filename(filename) {
+GRBL_Sender::GRBL_Sender(HardwareSerial &grblSerial)
+  : _grblSerial(&grblSerial) {
   _filePosition = 0;
   _sendingActive = false;
   _fileFinished = false;
@@ -9,7 +9,8 @@ GRBL_Sender::GRBL_Sender(HardwareSerial &grblSerial, const String &filename)
   _lastSentLine = "";
 }
 
-bool GRBL_Sender::begin() {
+bool GRBL_Sender::Sender_begin(const String &filename) {
+  _filename=filename;
   if (!SD.begin(53)) { // Mega2560 fixed SD CS pin
     return false;
   }
@@ -41,7 +42,8 @@ bool GRBL_Sender::openFile() {
   }
   
   if (_filePosition > 0) {
-    _gcodeFile.seek(_filePosition);
+    //_gcodeFile.seek(_filePosition);
+    _filePosition=0;
   }
   _fileFinished = false;
   return true;

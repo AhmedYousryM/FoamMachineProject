@@ -8,10 +8,10 @@
 class GRBL_Sender {
   public:
     // Constructor with filename
-    GRBL_Sender(HardwareSerial &grblSerial, const String &filename);
+    GRBL_Sender(HardwareSerial &grblSerial);
     
     // Initialize the sender
-    bool Sender_begin();
+    bool Sender_begin(const String &filename);
     
     // Control functions
     bool start();       // Start sending

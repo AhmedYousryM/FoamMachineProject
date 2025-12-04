@@ -13,8 +13,8 @@
 
 
     class SensorTestMode{
-         void begin();
-         void loop();
+         static void begin();
+         static void loop();
 
          private:
          NonBlockingSequence SidePlateSequence;
@@ -23,5 +23,7 @@
          NonBlockingSequence MotionHead2Sequence;
          NonBlockingSequence MotionFixation1Sequence;
          NonBlockingSequence MotionFixation2Sequence;
-    }SensorTest;
+
+         SensorTestMode()=delete;
+    };
 #endif
