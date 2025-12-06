@@ -252,11 +252,11 @@ bool GRBL_Main::ZAxis_Adjustment_Loop(){
 
         if (!RC_get_var(ZAXIS_SETUP_DONE)){
         if(Head_num==1){
-            ZAxis( digitalRead(36) , digitalRead(37) , digitalRead(38) )
+            ZAxis( pushButtonUp1.readFiltered() , pushButtonDown1.readFiltered() , pushButtonZero1.readFiltered() )
         }elseif(Head_num==2){
-            ZAxis( digitalRead(39) , digitalRead(40) , digitalRead(41) )
+            ZAxis( pushButtonUp2.readFiltered() , pushButtonDown2.readFiltered() , pushButtonZero2.readFiltered() )
         }
-        AdjustmentEnd( digitalRead(38) && digitalRead(41) );
+        AdjustmentEnd( pushButtonZero1.readFiltered() && pushButtonZero2.readFiltered() );
         }
     
     return EndZAdjustment;

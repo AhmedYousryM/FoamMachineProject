@@ -13,7 +13,7 @@ SensorFilter::SensorFilter(uint8_t pin, bool reverse) {
   
   // Default filter parameters
   _minCount = 2;
-  _minDuration = 1000; // 1ms
+  _minDuration = 1000; // 1000 micros =  1ms
   
   // Initialize filter counters
   _count = 0;
