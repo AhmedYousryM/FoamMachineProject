@@ -14,6 +14,7 @@
             _num=Fixation_num;
         }else{
             ///error
+            SendErr(WrongFcnCall);
         }
         
     }
@@ -50,39 +51,39 @@
 
     }
 
-    bool Fixation_main::Homing(){
+    bool Fixation_main::homing(){
         Homing.DoSequence();
     }
 
-    bool Fixation_main::Fixating(){
+    bool Fixation_main::fixating(){
         Fixating.DoSequence();
     }
-    void Fixation_main::ResetFixating(){
-        Fixating.Reset();
+    void Fixation_main::RestartFixating(){
+        Fixating.Restart();
     }
 
-    bool Fixation_main::GoingOut(){
+   /* bool Fixation_main::goingOut(){
         GoingOut.DoSequence();
 
-    }
+    }*/
 
-    bool Fixation_main::GoingIn(){
+    bool Fixation_main::goingIn(){
         GoingIn.DoSequence();
     }
 
 
     bool Fixation_main::DoingLubrication(){
-        return Lubricatin.DoSequence();
+        return Lubricating.DoSequence();
     }
-    void Fixation_main::ResetLubrication(){
-        Lubricatin.Reset();
+    void Fixation_main::RestartLubrication(){
+        Lubricating.Restart();
     }
 
 
 
 // Sequence Step
     bool Fixation_main::Homing_MoveLongRun(){
-        if(Homing.FirstTimeStepExecuting==true){
+        if(Homing.FirstTimeStepExecuting()){
             _motor.setMaxSpeed(MAX_SPEED_HOMING_1);
             _motor.move(-CNC_MAX_Y-20);
             return false;
@@ -96,8 +97,10 @@
                 }
                 else{
                     /////error
+                    SendErr(WrongFcnCall);
                 }
             }else{
+                SendErr(CNClimitCross);
                 ///error //
                 // cross the cnc limits
             }
@@ -106,7 +109,7 @@
 
     bool Fixation_main::Homing_Stop(){
         _motor.stop();
-        if(Homing.FirstTimeStepExecuting==true){
+        if(Homing.FirstTimeStepExecuting()){
             return false;
         }else{
             return (_motor.speed()==0);
@@ -114,7 +117,7 @@
     }
 
     bool Fixation_main::Homing_GoReverseRun(){
-        if(Homing.FirstTimeStepExecuting==true){
+        if(Homing.FirstTimeStepExecuting()){
             _motor.move(30);
         }else{
             _motor.run();
@@ -123,7 +126,7 @@
     }
 
     bool Fixation_main::Homing_MoveShortRun(){
-        if(Homing.FirstTimeStepExecuting==true){
+        if(Homing.FirstTimeStepExecuting()){
             _motor.setMaxSpeed(MAX_SPEED_HOMING_2);
             _motor.move(-50);
             return false;
@@ -137,9 +140,11 @@
                 }
                 else{
                     /////error
+                    SendErr(WrongFcnCall);
                 }
             }else{
                 ///error
+                SendErr(CNCOverDistance);
             }
         }
     }
@@ -150,7 +155,7 @@
         return true;
     }
 
-    bool Fixation_main::GoingOut(){
+    bool Fixation_main::goingOut(){
         if(MotionReset==true){
             _motor.moveTo(GAB);
             MotionReset=false;
@@ -163,7 +168,7 @@
 
     bool Fixation_main::GoingInSafe(){
         if (MotionReset==true){
-            float target_pos = safe_pos_before( CNC_MAX_Y - getValue(&CR_Vars[FOAMYWIDTH]) - BETWEEN_17_WOOD - GAB );
+            float target_pos = safe_pos_before( CNC_MAX_Y -  communication.GetVarf(CRVariable,FOAMYWIDTH) - BETWEEN_17_WOOD - GAB );
             _motor.moveTo( target_pos );
         }else{
             _motor.run();
@@ -172,7 +177,7 @@
     }
 
 // helper functions
-float safe_pos_before(float pos){
+float Fixation_main::safe_pos_before(float pos){
     // the woods are numbered in order similar to y axis
     // the first safe postion is above the wood number 0
     int wood_no = floor( (pos - FIRST_SAFE_POS)/BETWEEN_17_WOOD );
@@ -197,29 +202,32 @@ void Fixation_main::before_Fixation(float foam_start,float foam_end){
 
 bool Fixation_main::beforeFix(){
     if(_num==1){
-        //  FORK_FIXATION_GAB is the distance fork release before fixation point
-        float end_point=RC_var_get(FIXATION_POINT_2_X) - FORK_FIXATION_GAB;
-        before_Fixation(end_point-FC_var_get(G1_FOAM_WIDTH),end_point);
+        //  FORK_FIXATION_GAB is the distance fork release before fixation point 
+        float end_point = communication.GetVarf(CRVariable,FIXATION_POINT_2_X) - FORK_FIXATION_GAB;
+        before_Fixation(end_point-communication.GetVarf(CRVariable,G1_FOAM_WIDTH),end_point);
     }else{
         //  FORK_FIXATION_GAB is the distance fork release before fixation point
         float end_point=CNC_GATE_X_POS - FORK_FIXATION_GAB;
-        before_Fixation(end_point-FC_var_get(G2_FOAM_WIDTH),end_point);
+        before_Fixation(end_point-communication.GetVarf(CRVariable,G2_FOAM_WIDTH),end_point);
     }
 }
 
 bool Fixation_main::approachNearFoam(){
-    if(Homing.FirstTimeStepExecuting==true){
-        if ( ( _motor.currentPosition() < CNC_MAX_Y - RCvar[FOAMYWIDTH] - GAB ) &&
+    if(Homing.FirstTimeStepExecuting()){
+
+        if ( ( _motor.currentPosition() < CNC_MAX_Y - communication.GetVarf(CRVariable,FOAMYWIDTH) - GAB ) &&
         ( _motor.speed()==0 ) ) {
-            _motor.moveTo( CNC_MAX_Y - getValue(&CR_Vars[FOAMYWIDTH]) - GAB  );
+            _motor.moveTo( CNC_MAX_Y - communication.GetVarf(CRVariable,FOAMYWIDTH) - GAB  );
             return false;
         }else{
+             SendErr(ERR210);
             /// error function call in wrong possiton
         }
     }else{
         if (oneSensorRead() && FixationLimitSensorRead()){
             FoamYWidth_is_Correct = false ;
             // warning
+            SendWr(UnexpectedWoodtouch);
             return false;
         }
         _motor.run();
@@ -229,10 +237,10 @@ bool Fixation_main::approachNearFoam(){
 
 
 bool Fixation_main::touchFoam(){
-    if(Homing.FirstTimeStepExecuting==true){
+    if(Homing.FirstTimeStepExecuting()){
         // the maximum tolerance in foam width is +6 or -6 mm
         _motor.setMaxSpeed(MAX_SPEED_HOMING_2);
-        _motor.moveTo( CNC_MAX_Y - getValue(&CR_Vars[FOAMYWIDTH]) + 6 );
+        _motor.moveTo( CNC_MAX_Y - communication.GetVarf(CRVariable,FOAMYWIDTH) + 6 );
         return false;
     }else{
         if ( _motor.distanceToGo()==0 ){
@@ -255,7 +263,7 @@ bool Fixation_main::oneSensorRead(){
     bool onetouch = false;
     for (int i=0; i<5 ; i++){
         if (sidePlateSensorBool[i]){
-            if sidePlateSensor[i].readFiltered(){
+            if (sidePlateSensor[i].readFiltered()){
                 onetouch = true;
                 break;
             }
@@ -265,7 +273,7 @@ bool Fixation_main::oneSensorRead(){
 }
 
 bool Fixation_main::move2mm(){
-    if(Homing.FirstTimeStepExecuting==true){
+    if(Homing.FirstTimeStepExecuting()){
         _motor.moveTo( _motor.currentPosition() + 2 );
         return false;
     }else{
@@ -301,7 +309,7 @@ bool Fixation_main::fixationEnd(){
 
 bool Fixation_main::Acceptable_FoamYWidth(){
     Measure_FoamYWidth = CNC_MAX_Y - _motor.currentPosition() + 2; // due to move2mm() 
-    float dif = (Measure_FoamYWidth - getValue(&CR_Vars[FOAMYWIDTH]) ) ;
+    float dif = (Measure_FoamYWidth - communication.GetVarf(CRVariable,FOAMYWIDTH)) ;
     return ( dif * dif < 25) ;// (5mm * 5mm)
 }
 
@@ -309,7 +317,7 @@ bool Fixation_main::FixationLimitSensorRead(){
     if (_num == 1) return FixationG1LimitSensor.readFiltered();
     else if (_num == 2) return FixationG2LimitSensor.readFiltered();
     else{
-        // error
+        SendErr(WrongFcnCall);
     }
 }
 

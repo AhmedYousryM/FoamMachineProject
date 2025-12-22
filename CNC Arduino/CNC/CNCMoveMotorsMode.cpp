@@ -8,15 +8,18 @@ void MoveMotorsMode::begin(){
 
 void MoveMotorsMode::loop(){
     SensorTest.loop();
-    switch( communication.get(&CR_Vars[CNC_SENSOR_PAGE]) ){
+    
+    switch( communication.GetVari(CRVariable,CNC_SENSOR_PAGE) ){
     case 0:
       
     break;
     case 1:
        //......warning......//
+       SendWr(Wr202);
     break;
     case 2:
        //......warning......//
+       SendWr(Wr203);
     break;
     case 3:
        MoveHead1();
@@ -28,42 +31,44 @@ void MoveMotorsMode::loop(){
        MoveFixation1();
     break;
     case 6:
-       MoveFixation();
+       MoveFixation2();
     break;
     default:
     //......warning......//
+    SendWr(Wr204);
     break;
 }
 }
 
-static void MoveHead1(){
-    if(CR_Vars[MOVE_G1_X]==true){
+static void MoveMotorsMode:: MoveHead1(){
+    
+    if( communication.GetVarb(CRVariable,MOVE_G1_X) ){
        GRBL_MoveSpeed (Head1 , 'x' , 1 , 5 , 20 );
-    }else if(CR_Vars[MOVE_HEAD_G1_Y]==true){
+    }else if( communication.GetVarb(CRVariable,MOVE_HEAD_G1_Y) ){
        GRBL_MoveSpeed (Head1 , 'y' , 1 , 5 , 20 );
-    }else if(CR_Vars[MOVE_HEAD_G1_Z]==true){
+    }else if( communication.GetVarb(CRVariable,MOVE_HEAD_G1_Z) ){
        GRBL_MoveSpeed (Head1 , 'z' , 1 , 3 , 6 );
     }else{
        Head1.stopJog();
     }
 }
 
-static void MoveHead2(){
-    if(CR_Vars[MOVE_G1_X]==true){
-       GRBL_MoveSpeed(Head2 , 'x' , 1 , 5 , 20 );
-    }else if(CR_Vars[MOVE_HEAD_G1_Y]==true){
-       GRBL_MoveSpeed(Head2 , 'y' , 1 , 5 , 20 );
-    }else if(CR_Vars[MOVE_HEAD_G1_Z]==true){
-       GRBL_MoveSpeed(Head2 , 'z' , 1 , 3 , 6 );
+static void MoveMotorsMode::MoveHead2(){
+    if( communication.GetVarb(CRVariable,MOVE_G2_X) ){
+       GRBL_MoveSpeed (Head2 , 'x' , 1 , 5 , 20 );
+    }else if( communication.GetVarb(CRVariable,MOVE_HEAD_G2_Y) ){
+       GRBL_MoveSpeed (Head2 , 'y' , 1 , 5 , 20 );
+    }else if( communication.GetVarb(CRVariable,MOVE_HEAD_G2_Z) ){
+       GRBL_MoveSpeed (Head2 , 'z' , 1 , 3 , 6 );
     }else{
        Head2.stopJog();
     }
 }
 
-static void MoveFixation1(){
-    if(CR_Vars[MOVE_G1_X]==true){
+static void MoveMotorsMode::MoveFixation1(){
+    if( communication.GetVarb(CRVariable,MOVE_G1_X) ){
          GRBL_MoveSpeed(Head1 , 'x' , 1 , 5 , 20 );
-    }else if(CR_Vars[MOVE_FIX_G1_Y]==true){ 
+    }else if( communication.GetVarb(CRVariable,MOVE_FIX_G1_Y) ){ 
       MotorSpeed( Fixation1Y , 1 , 5 , 20 );
     }else{
         Head1.stopJog();
@@ -71,10 +76,10 @@ static void MoveFixation1(){
     }
 }
 
-static void MoveFixation2(){
-    if(CR_Vars[MOVE_G2_X]==true){
+static void MoveMotorsMode::MoveFixation2(){
+    if( communication.GetVarb(CRVariable,MOVE_G2_X) ){
          GRBL_MoveSpeed (Head2 , 'x' , 1 , 5 , 20 );
-    }else if(CR_Vars[MOVE_FIX_G2_Y]==true){
+    }else if( communication.GetVarb(CRVariable,MOVE_FIX_G2_Y) ){
       MotorSpeed( Fixation2Y , 1 , 5 , 20 );
     }else{
         Head2.stopJog();
@@ -83,51 +88,53 @@ static void MoveFixation2(){
 }
 
 
-void moveDir(Motor m, int distance){
-        if( CR_Vars[MOVE_DIRECTION] == true ){
+void MoveMotorsMode::moveDir(Motor m, int distance){
+        if( communication.GetVarb(CRVariable,MOVE_DIRECTION) ){
             Fixation1Y.moveTo( Fixation1Y.currentPosition() + distance );            
-        }else if( CR_Vars[MOVE_DIRECTION] == false ){
+        }else{
             Fixation1Y.moveTo( Fixation1Y.currentPosition() - distance );
         }
 }
 
-void MotorSpeed(Motor m, float distance1, float distance2, float distance3){
-    if( CR_Vars[MOVE_SPEED] == 0 ){
+void MoveMotorsMode::MotorSpeed(Motor m, float distance1, float distance2, float distance3){
+    if( communication.GetVari(CRVariable,MOVE_SPEED)==0 ){
          m.stop();
-    }else if( CR_Vars[MOVE_SPEED] == 1 ){
+    }else if( communication.GetVari(CRVariable,MOVE_SPEED)==1 ){
         // m.setMaxSpeed(100);
         moveDir( m, distance1);
-    }else if( CR_Vars[MOVE_SPEED] == 2 ){
+    }else if( communication.GetVari(CRVariable,MOVE_SPEED)==2 ){
         // m.setMaxSpeed(100);
         moveDir( m, distance2);
-    }else if( CR_Vars[MOVE_SPEED] == 3 ){
+    }else if( communication.GetVari(CRVariable,MOVE_SPEED)==3 ){
         // m.setMaxSpeed(100);
         moveDir( m, distance3);
     }else{
         // ......warning.....
+        SendWr(Wr205);
     }
 }
 
-void GRBL_MoveSpeed(GRBL_Control Head, char axis, float distance1, float distance2, float distance3){
+void MoveMotorsMode::GRBL_MoveSpeed(GRBL_Control Head, char axis, float distance1, float distance2, float distance3){
     
     char dir;
-    if (CR_Vars[MOVE_DIRECTION]==true){
+    if (communication.GetVarb(CRVariable,MOVE_DIRECTION) ){
         dir='+';
-    }else if(CR_Vars[MOVE_DIRECTION]==false){
-        dir='-';
     }else{
-
+        dir='-';
     }
-    
-    if( CR_Vars[MOVE_SPEED] == 0 ){
+
+    if( communication.GetVari(CRVariable,MOVE_SPEED)==0 ){
         Head.stopJog();
-    }else if( CR_Vars[MOVE_SPEED] == 1 ){
+    }else if( communication.GetVari(CRVariable,MOVE_SPEED)==1 ){
         Head.startJog( axis , dir , 50 , distance1);
-    }else if( CR_Vars[MOVE_SPEED] == 2 ){
+    }else if( communication.GetVari(CRVariable,MOVE_SPEED)==2 ){
         Head.startJog( axis , dir , 50 , distance2);
-    }else if( CR_Vars[MOVE_SPEED] == 3 ){
+    }else if( communication.GetVari(CRVariable,MOVE_SPEED)==3 ){
         Head.startJog( axis , dir , 50 , distance3);
     }else{
         // ......warning.....
+        SendWr(Wr206);
     }
 }
+SensorTestMode SensorTest;
+MoveMotorsMode MoveMotors;

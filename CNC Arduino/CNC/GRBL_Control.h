@@ -2,7 +2,8 @@
 #define GRBL_Control_h
 
 #include <Arduino.h>
-
+#include "CNCConstantMacros.h"
+#include "Communication.h"
 class GRBL_Control {
   public:
     // Constructor
@@ -39,6 +40,8 @@ class GRBL_Control {
     void Control_run();  // Call regularly in loop()
     bool isOkReceived();
     
+    //
+    String readGrblStatus(unsigned long timeout = 200);
   private:
     HardwareSerial *_grblSerial;
     bool _joggingActive;

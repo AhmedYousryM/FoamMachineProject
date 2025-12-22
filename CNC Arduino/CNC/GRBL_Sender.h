@@ -4,7 +4,8 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SPI.h>
-
+#include "CNCConstantMacros.h"
+#include "Communication.h"
 class GRBL_Sender {
   public:
     // Constructor with filename

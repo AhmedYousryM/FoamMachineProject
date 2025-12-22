@@ -31,6 +31,14 @@ extern SensorFilter FrameG1XSensor;
 extern SensorFilter G1G2XSensor;
 extern SensorFilter G2FrameXSensor;
 
+extern SensorFilter pushButtonUp1;
+extern SensorFilter pushButtonDown1;
+extern SensorFilter pushButtonZero1;
+
+extern SensorFilter pushButtonUp2;
+extern SensorFilter pushButtonDown2;
+extern SensorFilter pushButtonZero2;
+
 extern SensorFilter ErrorPin;
 /*
 extern SensorFilter FoamSensor[] = {SidePlateSensor1,SidePlateSensor2,SidePlateSensor3,SidePlateSensor4,SidePlateSensor5,

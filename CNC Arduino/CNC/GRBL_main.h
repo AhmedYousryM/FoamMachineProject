@@ -5,16 +5,19 @@
 #include <NonBlockingSequence.h>
 #include "GRBL_Control.h"
 #include "GRBL_Sender.h"
+#include "CNCsensors.h"
+#include "Fixation_main.h"
 
 #define VIRTUAL_UPPER_Z_POINT 500
 
 class GRBL_Main: public GRBL_Sender, public GRBL_Control {
-
+    public:
     //Grbl_Main(byte Head_Num_var, HardwareSerial &grblSerial, const String &filename);
-    Grbl_Main(byte Head_Num_var, HardwareSerial &grblSerial);
+    GRBL_Main(byte Head_Num_var, HardwareSerial &grblSerial);
 
     void begin();
-
+    unsigned long startPressTime=0;
+    char flag_char = 0;
     // inherits all functions from
     // GRBL_Control & 
     // GRBL_Sender
@@ -31,16 +34,16 @@ class GRBL_Main: public GRBL_Sender, public GRBL_Control {
     // void SetWorkpieceCoordinates(float x, float y, float z);      : GRBL_Sende
     // void SetWorkpieceCoordinatesZ( float z);
     // void SetWorkpieceCoordinatesXY(float x, float y );
-    void SetWorkpieceCoordinates();
+    //void SetWorkpieceCoordinates();
     // Start Position
     bool GoTo_StartPos2();
     bool GoTo_StartPos1();
-    void Reset_GoTo_StartPos2();
-    void Reset_GoTo_StartPos1();
+    void Restart_GoTo_StartPos2();
+    void Restart_GoTo_StartPos1();
 
     // Blowering
     bool bigBlowering();
-    void ResetBigBlowering();
+    void RestartBigBlowering();
     // Z Axis Adjustment
     bool ZAxis_Adjustment_Loop();
     bool IsZAxisAdjustmentFinished();
@@ -50,18 +53,18 @@ class GRBL_Main: public GRBL_Sender, public GRBL_Control {
     bool MotionReset = true;
 
     bool ZSensorHOmingFlagFun();
-
+    
 
     private :
-     
-    ClassNonBlockingSequence<Fixation_main> HomingSequence;
-    ClassNonBlockingSequence<Fixation_main> LubricationSequence;
+    ClassNonBlockingSequence<GRBL_Main> HomingSequence;
+    ClassNonBlockingSequence<GRBL_Main> LubricationSequence;
     char LubricationRepition = 5;
-    ClassNonBlockingSequence<Fixation_main> StartPos2Sequence;
-    ClassNonBlockingSequence<Fixation_main> StartPos1Sequence;
-    ClassNonBlockingSequence<Fixation_main> WorkingSequence;
-    ClassNonBlockingSequence<Fixation_main> BloweringSequence;
-
+    ClassNonBlockingSequence<GRBL_Main> StartPos2Sequence;
+    ClassNonBlockingSequence<GRBL_Main> StartPos1Sequence;
+    ClassNonBlockingSequence<GRBL_Main> WorkingSequence;
+    ClassNonBlockingSequence<GRBL_Main> BloweringSequence;
+ 
+    
     byte Head_num;
     byte Mode;
     bool Mode_finished=false;
@@ -71,16 +74,16 @@ class GRBL_Main: public GRBL_Sender, public GRBL_Control {
     float start_z;
     float pointx_half_foam;
     bool Working_enable=true;
-    bool Sender_begin();
+    bool sender_begin();
 
     bool EndZAdjustment = false;
 
     float MaximumZAxisTravel;
 
     void Set_StartPos2(float x, float y, float z);
-    bool start_pos_set_done = false
+    bool start_pos_set_done = false;
 
-    void ZAxis(bool , bool , bool);
+    void ZAxis(bool Up,bool Down,bool Zero);
     void AdjustmentEnd(bool b);
     // Step bool functions
         bool Homing1();
@@ -101,7 +104,7 @@ class GRBL_Main: public GRBL_Sender, public GRBL_Control {
 
         bool ZSensorHomingFlag = false;
 
-}
+};
 
 extern GRBL_Main GRBL_main1;
 extern GRBL_Main GRBL_main2;
