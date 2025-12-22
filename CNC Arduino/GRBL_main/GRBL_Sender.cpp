@@ -1,7 +1,7 @@
 #include "GRBL_Sender.h"
 
-GRBL_Sender::GRBL_Sender(HardwareSerial &grblSerial, const String &filename)
-  : _grblSerial(&grblSerial), _filename(filename) {
+GRBL_Sender::GRBL_Sender(HardwareSerial &grblSerial)
+  : _grblSerial(&grblSerial) {
   _filePosition = 0;
   _sendingActive = false;
   _fileFinished = false;
@@ -9,7 +9,8 @@ GRBL_Sender::GRBL_Sender(HardwareSerial &grblSerial, const String &filename)
   _lastSentLine = "";
 }
 
-bool GRBL_Sender::begin() {
+bool GRBL_Sender::Sender_begin(const String &filename) {
+  _filename=filename;
   if (!SD.begin(53)) { // Mega2560 fixed SD CS pin
     return false;
   }
@@ -27,6 +28,7 @@ bool GRBL_Sender::openFile() {
       send warning message
       *****
       */
+     SendWr(Wr211);
     _gcodeFile = SD.open(_filename, FILE_READ);
     if (!_gcodeFile) {
       /*
@@ -34,6 +36,7 @@ bool GRBL_Sender::openFile() {
       send error message
       *****
       */
+     SendErr(ERR212);
       _filePosition = 0;
       _fileFinished = false;
       return false;
@@ -41,7 +44,8 @@ bool GRBL_Sender::openFile() {
   }
   
   if (_filePosition > 0) {
-    _gcodeFile.seek(_filePosition);
+    //_gcodeFile.seek(_filePosition);
+    _filePosition=0;
   }
   _fileFinished = false;
   return true;
@@ -60,6 +64,7 @@ bool GRBL_Sender::start() {
     send error message
     *****
     */
+   SendErr(ERR212);
     return false;
   }
   
@@ -162,11 +167,13 @@ void GRBL_Sender::processResponse(const String &response) {
     // Resend last line on error
     if (_lastSentLine.length() > 0) {
       _grblSerial->println(_lastSentLine);
+      SendWr(WR213);
       /*
       warning
       */
     }
   }else{
+    SendErr(ERR214);
     /*
     error
     */
@@ -178,7 +185,10 @@ bool GRBL_Sender::isSending() const {
 }
 
 bool GRBL_Sender::fileIsOpen() const {
-  return _gcodeFile && _gcodeFile.available();
+  if(_gcodeFile){
+    if(_gcodeFile.available()){return true;}
+    else{return false;}
+  }else{return false;}
 }
 
 bool GRBL_Sender::isFinished() const {
@@ -187,7 +197,7 @@ bool GRBL_Sender::isFinished() const {
 
 
     // spindle motion
-    void SetSpindleSpeed(float s){
+    void GRBL_Sender::SetSpindleSpeed(float s){
       _grblSerial->println("S"+String(s, 3));
     }
     void GRBL_Sender::SpindleStart(){

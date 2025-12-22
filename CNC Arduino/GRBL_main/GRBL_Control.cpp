@@ -8,14 +8,14 @@ GRBL_Control::GRBL_Control(HardwareSerial &grblSerial)
   _jogDistance = 0.1;
   _lastJogTime = 0;
   _jogInterval = 0;
-  
+  _jogDir='+';
   _lastStatus = "Unknown";
   _lastStatusRequest = 0;
   _statusInterval = 150; // ms between status requests
   _isMoving = false;
 }
 
-void GRBL_Control::begin(unsigned long baudrate) {
+void GRBL_Control::Control_begin(unsigned long baudrate) {
   _grblSerial->begin(baudrate);
   
   // Send wake-up commands to clear buffer
@@ -68,6 +68,19 @@ void GRBL_Control::setMachinePosition(float x, float y, float z) {
   if (!isnan(x)) command += " X" + String(x, 3);
   if (!isnan(y)) command += " Y" + String(y, 3);
   if (!isnan(z)) command += " Z" + String(z, 3);
+  sendCommand(command);
+}
+
+void GRBL_Control::setMachineZ(float z) {
+  String command = "G92";
+  if (!isnan(z)) command += " Z" + String(z, 3);
+  sendCommand(command);
+}
+
+void GRBL_Control::setMachineXY(float x, float y) {
+  String command = "G92";
+  if (!isnan(x)) command += " X" + String(x, 3);
+  if (!isnan(y)) command += " Y" + String(y, 3);
   sendCommand(command);
 }
 
@@ -191,6 +204,7 @@ void GRBL_Control::processResponse(const String &response) {
     /*
     send error
     */
+    SendErr(ERR215);
   }
 }
 
@@ -207,12 +221,12 @@ bool GRBL_Control::isOkReceived(){
 
 float GRBL_Control::getZAxisMachinePos(){
   // Request status
-  GRBL.write("?\n");  
+  _grblSerial->write("?\n"); 
 
   // Read reply
-  String response = readGrblStatus;
+  String response = readGrblStatus();
 
-  if (status.length() > 0) {
+  if (response.length() > 0) {
     // Example reply: <Idle|MPos:5.000,10.000,-2.000|WPos:0.000,5.000,-7.000>
     int mposIndex = response.indexOf("MPos:");
     if (mposIndex != -1) {
@@ -236,13 +250,13 @@ float GRBL_Control::getZAxisMachinePos(){
 
 }
 
-String readGrblStatus(unsigned long timeout = 200) {
+String GRBL_Control::readGrblStatus(unsigned long timeout = 200) {
   String response = "";
   unsigned long start = millis();
 
   while (millis() - start < timeout) {
-    while (GRBL.available()) {
-      char c = GRBL.read();
+    while (_grblSerial->available()) {
+      char c = _grblSerial->read();
       if (c == '<') {  // Start of a status report
         response = "<";
       } else if (response.length() > 0) {
