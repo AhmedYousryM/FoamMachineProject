@@ -1,38 +1,41 @@
-#include "Terminal_Devices.h"
-#include "CncArduino2.h"
-#include "Variables.h"
+//#include "Terminal_Devices.h"
+//#include "CncArduino2.h"
+#include "CNCVariables.h"
+#include "Communication.h"
  long time ;
- String ms="Omar";
- 
+  String ms="GCode.txt";
 void setup(){
-  device.device_id='C';
-  // put your setup code here, to run once:
-  SetSerial(Serial);
+  Initial();
+  communication.begin('C',Serial);
   Serial3.begin(57600);
-  //InitVar(ErrorVariable,102,'b');
-  //InitVar(ErrorVariable,101,'b');
-  SendWr(50);
-  SendErr(101);
-  InitVar(CRVariable,98,'i');
-  SetVar(CRVariable,98,300);
-  SendVar('R',98);
-  InitVar(CRVariable,92,'i');
-  SetVar(CRVariable,92,300);
-  SendVar('R',92);
-  InitVar(CRVariable,97,'S');
-  SetVar(CRVariable,97,&ms);
+
+  communication.SendWr(0);
+  communication.SendErr(1);
+
+  communication.SetVar(CRVariable,CNC_SENSOR_PAGE,3);
+  communication.SendVar('R',CNC_SENSOR_PAGE);
+
+  communication.SetVar(CRVariable,FIXATION_POINT_2_X,(float)300.2);
+  communication.SendVar('R',FIXATION_POINT_2_X);
+
+  
+  communication.SetVar(CRVariable,GCODE_FILE_PATH1,&ms);
+  //Serial3.println(*(CRVariable[GCODE_FILE_PATH1].value.stringPtr));
+  communication.SendVar('R',GCODE_FILE_PATH1);
   //SendVar('R',97);  
   //AskVar('R',97);
-  InitVar(CMVariable,2,'i');
-  SetVar(CMVariable,2,100);
-  //SendVar('M',2);  
-  InitVar(GlobalVariable,95,'f');//595
+  //InitVar(CMVariable,2,'i');
+  communication.SetVar(CMVariable,MODE,2);
+  //communication.SendVar('M',MODE);  
+  //InitVar(GlobalVariable,95,'f');//595
+  //Serial3.println(GlobalVariable[0].datatype);
+  //Serial3.println(GlobalVariable[0].value.floatvalue);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  SendMessage();
-  RecieveMessage(*device.stream);
-  }
+  communication.Send();
+  communication.Receive();
+}
   
 
