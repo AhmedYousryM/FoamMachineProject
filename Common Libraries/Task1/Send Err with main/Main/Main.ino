@@ -1,28 +1,19 @@
-#include "mainArduino.h"
-#include "Variables.h"
-#include "Main.h"
-int i=1;
+#include "MainVariables.h"
+#include "Communication.h"
 void setup() {
   // put your setup code here, to run once:
+  Initial();
+  communication.begin('M');
   Serial.begin(57600);  
-  main_set_serial_for_queue();
-  device.device_id='M';
-  InitVar(CMVariable,2,'i');
-  InitVar(GlobalVariable,95,'f');
-  float ss=100.12;
-  SetVar(GlobalVariable,95,(float)100.12);
-  SendVar('C',595);  
+  communication.SetVar(GlobalVariable,0,(float)100.11);
+  Serial.println(GlobalVariable[0].datatype);
+  Serial.println(communication.GetVarf(GlobalVariable,0));
+  communication.SendVar('C',500);  
   //SendVar('R',595);  
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  mainSendMessage();
-  mainRecieveMessage(Serial2);
-  mainRecieveMessage(Serial1);
-  mainRecieveMessage(Serial3);
-  if(i==1){
-    //SendVar('C',595);
-    i=2;
-  }
+  communication.Send();
+  communication.Receive();
 }
