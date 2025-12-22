@@ -1,16 +1,24 @@
 #include "NonBlockingSequence.h"
 
-    void NonBlockingSequence::DoSequence(){
+    bool NonBlockingSequence::DoSequence(){
+        
+        if(_time_mil>0){
+            if ( millis() - _last_time_mil_sequence_do > _time_mil ){
+                Restart();
+            }
+                _last_time_mil_sequence_do = millis() ;
+        }
 
+        if (_end == false){
         switch(steps.get_element().my_step_type){
 
             case NonBlockingSequence::function_call:
-                if(first_time_exexuting_step==true){
+                if(first_time_executing_step==true){
                     my_func_ptr=steps.get_element().fun_ptr;
                     if( (my_func_ptr)() ){
                         NextStep();
                     }else{
-                        first_time_exexuting_step=false;
+                        first_time_executing_step=false;
                     }
                 }else{
                     if( (my_func_ptr)() ){
@@ -21,9 +29,9 @@
             break;
 
             case NonBlockingSequence::pause:
-                if(first_time_exexuting_step==true){
+                if(first_time_executing_step==true){
                     start_pause_time=millis();
-                    first_time_exexuting_step=false;
+                    first_time_executing_step=false;
                 }else if( millis()-start_pause_time > pauses_time.get_element() ){
                     // prepare for the next pause
                     pauses_time.next();
@@ -40,18 +48,19 @@
             break;
 
             case NonBlockingSequence::repeat_n_times:
-                if(_n_conter>0){
-                    _n_conter--;
+                if(_n_counter>0){
+                    _n_counter--;
                     steps.from_begining();
                     pauses_time.from_begining();
-                    first_time_exexuting_step=true;
+                    first_time_executing_step=true;
                 }else{
                     _end=true;
                 }
             break;
 
         }
-        
+        }
+        return !_end;
     }
 
     void NonBlockingSequence::AddNewStep( func_ptr_type func_ptr ){
@@ -74,8 +83,9 @@
         steps.from_begining();
         pauses_time.from_begining();
         _end=false;
-        first_time_exexuting_step=true;
-        _n_conter = repetition;
+        first_time_executing_step=true;
+        _n_counter = repetition;
+        _last_time_mil_sequence_do = millis() ;
     }
 
     void NonBlockingSequence::Repeat(){
@@ -87,20 +97,20 @@
     void NonBlockingSequence::Repeat(unsigned int n){
         step mystep ;
         mystep.my_step_type= NonBlockingSequence::repeat_n_times;
-        repetition = n;
-        _n_conter = n;
+        repetition = n - 1 ;
+        _n_counter = n - 1 ;
         steps.add_element(mystep);
     }
 
 
 
-    bool NonBlockingSequence::Finish(){
+    bool NonBlockingSequence::isFinish(){
         return _end;
     }
 
     bool NonBlockingSequence::NextStep(){
         if (steps.next()){ 
-            first_time_exexuting_step=true;
+            first_time_executing_step=true;
             return true;
         }
         else{ _end=true; return false; }
@@ -116,4 +126,13 @@
             }
         }
         return pass;
+    }
+
+    bool NonBlockingSequence::FirstTimeStepExecuting(){
+        return first_time_executing_step;
+    }
+
+
+    void NonBlockingSequence::AutoRestart(unsigned long time_mil){
+        _time_mil=time_mil;
     }
