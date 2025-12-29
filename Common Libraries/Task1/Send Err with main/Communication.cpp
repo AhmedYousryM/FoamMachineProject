@@ -29,9 +29,8 @@ void Communication::SendVar(char destination_device, uint16_t var_index){
     }
     else{
       InformationQueue* Queue_ptr = SelectQueue(msg);
-    build_message(msg,Queue_ptr->MessageQueue,20);
-    }
-    
+      build_message(msg,Queue_ptr->MessageQueue,20);
+    } 
 }
 void Communication::Send(){
   if (device.device_id!='M'){Terminal.SendMessage();}

@@ -5,7 +5,7 @@
 #include "CNCSensorTestMode.h"
 #include <NonBlockingSequence.h>
 #include "CNCMotors.h"
-#include "Communication.h"
+#include <Communication.h>
 extern SensorTestMode SensorTest;
 
 class MoveMotorsMode{

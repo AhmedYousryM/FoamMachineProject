@@ -2,7 +2,10 @@
 Variable GlobalVariable[1]={}; // 7
 Variable CFVariable[7]={}; // 1
 
+
 Variable CRVariable[46]={}; // 2
+Variable (&RCVariable)[46] = CRVariable;
+
 Variable CMVariable[6]={}; // 3
 
 // unused

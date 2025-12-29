@@ -5,7 +5,7 @@
 #include <NonBlockingSequence.h>
 #include "CNCsensors.h"
 #include "CNCConstantMacros.h"
-#include "Communication.h"
+#include <Communication.h>
 #define MAX_SPEED_HOMING_1 1
 #define MAX_SPEED_HOMING_2 .1
 #define HIGH_SPEED 50

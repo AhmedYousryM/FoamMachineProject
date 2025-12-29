@@ -2,7 +2,7 @@
 #include "CNCSensorTestMode.h"
 #include "Fixation_main.h"
 #include "GRBL_main.h"
-#include "Communication.h"
+#include <Communication.h>
 #include "CNCVariables.h"
 void setup() {
   // put your setup code here, to run once:

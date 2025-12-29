@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <NonBlockingSequence.h>
 #include "CNCsensors.h"
-#include "Communication.h"
+#include <Communication.h>
 #include "CNCConstantMacros.h"
 /*
  * @brief Declares a step function that reads a sensor and sends the value
